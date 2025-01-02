@@ -1,13 +1,4 @@
-module Main
-  ( Action(..)
-  , AppError(..)
-  , SentenceAnimation(..)
-  , State(..)
-  , initialState
-  , main
-  , mapError
-  , render
-  ) where
+module Main where
 
 import Prelude
 
@@ -31,7 +22,7 @@ import Domain.Values.Audio.Volume (Volume(..))
 import Effect (Effect)
 import Effect.Aff (Milliseconds(..), delay)
 import Effect.Aff.Class (class MonadAff, liftAff)
-import Effect.Unsafe (unsafePerformEffect)
+import Effect.Class (class MonadEffect)
 import Entities.Audio.Channel (Channel(..), Loop(..), PlayStatus(..))
 import Halogen (liftEffect)
 import Halogen as H
@@ -212,45 +203,47 @@ mapError :: forall a b. (a -> AppError) -> Either a b -> Either AppError b
 mapError _ (Right b) = Right b
 mapError f (Left a) = Left $ f a
 
-leftLogging :: forall f a b. Functor f => f (Either a b) -> f Unit
-leftLogging = void <<< map
-  ( case _ of
-      Left e -> unsafePerformEffect $ Logger.error e
-      Right _ -> unit
-  )
+runExceptTWithLog :: forall m a b. MonadEffect m => ExceptT a m b -> m (Either a b)
+runExceptTWithLog action = do
+  result <- runExceptT action
+  case result of
+    Left e -> do
+      liftEffect $ Logger.error e
+      pure result
+    Right _ -> pure result
 
 handleAction :: forall o m. MonadAff m => Action -> H.HalogenM State Action () o m Unit
 handleAction = case _ of
-  Setup -> leftLogging $ runExceptT do
+  Setup -> void $ runExceptTWithLog do
     response <- ExceptT
       $ map (mapError FetchError)
       $ liftAff
-      $ AX.get AXRF.arrayBuffer "http://localhost:8080/assets/bgm.ogg"
+      $ AX.get AXRF.arrayBuffer "/assets/bgm.ogg"
     asyncOperation <- liftEffect $ register "channel" response.body (Volume 1.0) (Just $ Loop { start: Samples 222966, end: maxSamples })
     channel <- ExceptT $ map (mapError AudioError) $ liftAff $ asyncOperation
     H.modify_ \(State s) -> State (s { channel = channel })
 
-  Play -> leftLogging $ runExceptT do
+  Play -> void $ runExceptTWithLog do
     State state <- H.get
     channel <- ExceptT $ map (mapError AudioError) $ liftEffect $ play (DelayMs 0) (OffsetMs 0) (FadeInMs 0) (FadeOutMs 0) state.channel
     H.modify_ \(State s) -> State $ s { channel = channel }
 
-  Pause -> leftLogging $ runExceptT do
+  Pause -> void $ runExceptTWithLog do
     State state <- H.get
     c <- ExceptT $ map (mapError AudioError) $ liftEffect $ pause (FadeOutMs 500) state.channel
     H.modify_ \(State s) -> State (s { channel = c })
 
-  Resume -> leftLogging $ runExceptT do
+  Resume -> void $ runExceptTWithLog do
     State state <- H.get
     c <- ExceptT $ map (mapError AudioError) $ liftEffect $ resume (FadeInMs 500) state.channel
     H.modify_ \(State s) -> State (s { channel = c })
 
-  Stop -> leftLogging $ runExceptT do
+  Stop -> void $ runExceptTWithLog do
     State state <- H.get
     c <- ExceptT $ map (mapError AudioError) $ liftEffect $ stop (FadeOutMs 500) state.channel
     H.modify_ \(State s) -> State (s { channel = c })
 
-  ChangeVolume volume -> leftLogging $ runExceptT do
+  ChangeVolume volume -> void $ runExceptTWithLog do
     State state <- H.get
     c <- ExceptT $ map (mapError AudioError) $ liftEffect $ changeVolume volume state.channel
     H.modify_ \(State s) -> State (s { channel = c })
