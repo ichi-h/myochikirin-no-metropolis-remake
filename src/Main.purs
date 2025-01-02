@@ -3,7 +3,8 @@ module Main where
 import Prelude
 
 import Adapter.Audio.Channel (changeVolume, pause, play, register, resume, stop)
-import Control.Monad.Except (ExceptT(..))
+import Adapter.Audio.PlayOneShot (playOneShot)
+import Control.Monad.Except (ExceptT(..), lift)
 import Data.Array (mapWithIndex)
 import Data.Array as Array
 import Data.Int (toNumber)
@@ -235,8 +236,11 @@ handleAction = case _ of
     else
       pure unit
 
-  NextSentence -> do
+  NextSentence -> void $ runExceptTWithLog do
     State state <- H.get
+    buffer <- ExceptT $ liftAff $ fetchAudio "/assets/bell.ogg"
+    asyncOperation <- liftEffect $ playOneShot (Volume 1.0) buffer
+    _ <- ExceptT $ liftAff $ asyncOperation
     let nextIndex = if state.sentenceIndex + 1 >= Array.length sentences then 0 else state.sentenceIndex + 1
     H.modify_ \(State s) -> State $ s
       { sentenceAnimation = Rendering
@@ -244,7 +248,7 @@ handleAction = case _ of
       , sentence = fromMaybe "" $ Array.index sentences nextIndex
       }
     H.liftAff $ delay $ Milliseconds $ 20.0 -- wait for rendering
-    handleAction StartAnimation
+    lift $ handleAction StartAnimation
 
   FinishAnimation -> H.modify_ \(State s) -> State $ s { sentenceAnimation = Finished }
 
