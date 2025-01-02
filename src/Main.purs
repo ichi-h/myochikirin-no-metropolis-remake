@@ -3,7 +3,6 @@ module Main
   , AppError(..)
   , SentenceAnimation(..)
   , State(..)
-  , handleAction
   , initialState
   , main
   , mapError
@@ -12,9 +11,9 @@ module Main
 
 import Prelude
 
+import Adapter.Audio.Channel (changeVolume, pause, play, register, resume, stop)
 import Affjax.ResponseFormat as AXRF
 import Affjax.Web as AX
-import Channel (Channel(..), PlayEvent(..), PlayStatus(..), StopEvent(..), play, stop)
 import Control.Monad.Except (ExceptT(..), runExceptT)
 import Data.Array (mapWithIndex)
 import Data.Array as Array
@@ -23,9 +22,17 @@ import Data.Int (toNumber)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.String (length)
 import Data.String.CodeUnits (fromCharArray, toCharArray)
+import Domain.Values.Audio.DelayMs (DelayMs(..))
+import Domain.Values.Audio.FadeInMs (FadeInMs(..))
+import Domain.Values.Audio.FadeOutMs (FadeOutMs(..))
+import Domain.Values.Audio.OffsetMs (OffsetMs(..))
+import Domain.Values.Audio.Samples (Samples(..), maxSamples)
+import Domain.Values.Audio.Volume (Volume(..))
 import Effect (Effect)
 import Effect.Aff (Milliseconds(..), delay)
 import Effect.Aff.Class (class MonadAff, liftAff)
+import Effect.Unsafe (unsafePerformEffect)
+import Entities.Audio.Channel (Channel(..), Loop(..), PlayStatus(..))
 import Halogen (liftEffect)
 import Halogen as H
 import Halogen.Aff as HA
@@ -33,7 +40,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.VDom.Driver (runUI)
-import WebAudio (registerNodes)
+import Utils.Logger as Logger
 
 main :: Effect Unit
 main = HA.runHalogenAff do
@@ -43,9 +50,12 @@ main = HA.runHalogenAff do
 data Action
   = Setup
   | Play
+  | Pause
+  | Resume
   | Stop
+  | ChangeVolume Volume
   | StartAnimation
-  | NextAnimation
+  | NextSentence
   | FinishAnimation
   | NoOp
 
@@ -107,8 +117,8 @@ initialState _ = State
   { channel: Channel
       { name: "channel"
       , playStatus: Stopped
-      , volume: 1.0
-      , audioBuffer: Nothing
+      , volume: Volume 1.0
+      , loop: Nothing
       }
   , sentenceAnimation: Ready
   , sentence: ""
@@ -121,20 +131,54 @@ render (State { sentenceAnimation, sentence }) =
     [ HP.class_ $ HH.ClassName "w-full h-svh flex items-center justify-center"
     ]
     [ if sentenceAnimation == Ready then
-        HH.button
-          [ HE.onClick \_ -> Play
-          , HP.class_ $ HH.ClassName "w-1/2 h-16 text-white text-4xl rounded-sm shadow-lg flex items-center justify-center border-2 border-white"
+        HH.div
+          [ HP.class_ $ HH.ClassName "w-full h-full flex items-center justify-center"
           ]
-          [ HH.text "Play" ]
+          [ HH.button
+              [ HE.onClick \_ -> Setup
+              , HP.class_ $ HH.ClassName "w-1/2 h-16 text-white text-4xl rounded-sm shadow-lg flex items-center justify-center border-2 border-white"
+              ]
+              [ HH.text "Setup" ]
+          , HH.button
+              [ HE.onClick \_ -> Play
+              , HP.class_ $ HH.ClassName "w-1/2 h-16 text-white text-4xl rounded-sm shadow-lg flex items-center justify-center border-2 border-white"
+              ]
+              [ HH.text "Play" ]
+          , HH.button
+              [ HE.onClick \_ -> Pause
+              , HP.class_ $ HH.ClassName "w-1/2 h-16 text-white text-4xl rounded-sm shadow-lg flex items-center justify-center border-2 border-white"
+              ]
+              [ HH.text "Pause" ]
+          , HH.button
+              [ HE.onClick \_ -> Resume
+              , HP.class_ $ HH.ClassName "w-1/2 h-16 text-white text-4xl rounded-sm shadow-lg flex items-center justify-center border-2 border-white"
+              ]
+              [ HH.text "Resume" ]
+          , HH.button
+              [ HE.onClick \_ -> Stop
+              , HP.class_ $ HH.ClassName "w-1/2 h-16 text-white text-4xl rounded-sm shadow-lg flex items-center justify-center border-2 border-white"
+              ]
+              [ HH.text "Stop" ]
+          , HH.button
+              [ HE.onClick \_ -> ChangeVolume (Volume 0.1)
+              , HP.class_ $ HH.ClassName "w-1/2 h-16 text-white text-4xl rounded-sm shadow-lg flex items-center justify-center border-2 border-white"
+              ]
+              [ HH.text "ChangeVolume" ]
+          , HH.button
+              [ HE.onClick \_ -> NextSentence
+              , HP.class_ $ HH.ClassName "w-1/2 h-16 text-white text-4xl rounded-sm shadow-lg flex items-center justify-center border-2 border-white"
+              ]
+              [ HH.text "NextSentence" ]
+          ]
       else
         HH.div
           [ HP.class_ $ HH.ClassName "w-full h-full flex items-center justify-center"
           , HE.onClick \_ ->
               case sentenceAnimation of
-                Ready -> NextAnimation
+                Ready -> NextSentence
                 Rendering -> NoOp
                 Showing -> FinishAnimation
-                Finished -> NextAnimation
+                Finished -> NextSentence
           ]
           [ HH.div
               [ HP.class_ $ HH.ClassName "w-full max-w-5xl text-4xl text-white break-all select-none "
@@ -161,41 +205,54 @@ render (State { sentenceAnimation, sentence }) =
     ]
 
 data AppError
-  = RegisterError
-  | FetchError
+  = AudioError String
+  | FetchError AX.Error
 
-mapError :: forall a b. AppError -> Either a b -> Either AppError b
+mapError :: forall a b. (a -> AppError) -> Either a b -> Either AppError b
 mapError _ (Right b) = Right b
-mapError a _ = Left a
+mapError f (Left a) = Left $ f a
+
+leftLogging :: forall f a b. Functor f => f (Either a b) -> f Unit
+leftLogging = void <<< map
+  ( case _ of
+      Left e -> unsafePerformEffect $ Logger.error e
+      Right _ -> unit
+  )
 
 handleAction :: forall o m. MonadAff m => Action -> H.HalogenM State Action () o m Unit
 handleAction = case _ of
-  Setup -> void $ runExceptT do
-    _ <- ExceptT $ map (mapError RegisterError) $ liftEffect $ registerNodes "channel"
+  Setup -> leftLogging $ runExceptT do
     response <- ExceptT
       $ map (mapError FetchError)
       $ liftAff
-      $ AX.get AXRF.arrayBuffer "http://localhost:8080/assets/test.mp3"
-    H.modify_ \(State s) -> State (s { channel = updateAudioBuffer s.channel response.body })
-    where
-    updateAudioBuffer (Channel c) buffer = Channel c { audioBuffer = Just buffer }
+      $ AX.get AXRF.arrayBuffer "http://localhost:8080/assets/bgm.ogg"
+    asyncOperation <- liftEffect $ register "channel" response.body (Volume 1.0) (Just $ Loop { start: Samples 222966, end: maxSamples })
+    channel <- ExceptT $ map (mapError AudioError) $ liftAff $ asyncOperation
+    H.modify_ \(State s) -> State (s { channel = channel })
 
-  Play -> do
+  Play -> leftLogging $ runExceptT do
     State state <- H.get
-    c <- liftEffect $ play $ PlayEvent
-      { channel: state.channel
-      , delayMs: 0
-      , offsetMs: 0
-      , fadeInMs: 0
-      , fadeOutMs: 0
-      , loop: Just { start: 0, end: 7474068 }
-      }
-    H.modify_ \(State s) -> State $ s { channel = c }
-    handleAction NextAnimation
+    channel <- ExceptT $ map (mapError AudioError) $ liftEffect $ play (DelayMs 0) (OffsetMs 0) (FadeInMs 0) (FadeOutMs 0) state.channel
+    H.modify_ \(State s) -> State $ s { channel = channel }
 
-  Stop -> do
+  Pause -> leftLogging $ runExceptT do
     State state <- H.get
-    c <- liftEffect $ stop $ StopEvent { channel: state.channel, fadeOutMs: 500 }
+    c <- ExceptT $ map (mapError AudioError) $ liftEffect $ pause (FadeOutMs 500) state.channel
+    H.modify_ \(State s) -> State (s { channel = c })
+
+  Resume -> leftLogging $ runExceptT do
+    State state <- H.get
+    c <- ExceptT $ map (mapError AudioError) $ liftEffect $ resume (FadeInMs 500) state.channel
+    H.modify_ \(State s) -> State (s { channel = c })
+
+  Stop -> leftLogging $ runExceptT do
+    State state <- H.get
+    c <- ExceptT $ map (mapError AudioError) $ liftEffect $ stop (FadeOutMs 500) state.channel
+    H.modify_ \(State s) -> State (s { channel = c })
+
+  ChangeVolume volume -> leftLogging $ runExceptT do
+    State state <- H.get
+    c <- ExceptT $ map (mapError AudioError) $ liftEffect $ changeVolume volume state.channel
     H.modify_ \(State s) -> State (s { channel = c })
 
   StartAnimation -> do
@@ -208,7 +265,7 @@ handleAction = case _ of
     else
       pure unit
 
-  NextAnimation -> do
+  NextSentence -> do
     State state <- H.get
     let nextIndex = if state.sentenceIndex + 1 >= Array.length sentences then 0 else state.sentenceIndex + 1
     H.modify_ \(State s) -> State $ s

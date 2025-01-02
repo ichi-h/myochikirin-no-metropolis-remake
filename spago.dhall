@@ -25,6 +25,8 @@ to generate this file without the comments in this block.
   , "halogen"
   , "halogen-subscriptions"
   , "integers"
+  , "js-promise"
+  , "js-promise-aff"
   , "maybe"
   , "prelude"
   , "strings"
