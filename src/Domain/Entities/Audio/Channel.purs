@@ -13,6 +13,7 @@ module Entities.Audio.Channel
 import Data.ArrayBuffer.Types (ArrayBuffer)
 import Data.Either (Either)
 import Data.Maybe (Maybe)
+import Domain.Exceptions.AppError (AppError)
 import Domain.Values.Audio.DelayMs (DelayMs)
 import Domain.Values.Audio.FadeInMs (FadeInMs)
 import Domain.Values.Audio.FadeOutMs (FadeOutMs)
@@ -32,9 +33,9 @@ newtype Channel = Channel
   , loop :: Maybe Loop
   }
 
-type Register = String -> ArrayBuffer -> Volume -> Maybe Loop -> Effect (Aff (Either String Channel))
-type Play = DelayMs -> OffsetMs -> FadeInMs -> FadeOutMs -> Channel -> Effect (Either String Channel)
-type Stop = FadeOutMs -> Channel -> Effect (Either String Channel)
-type Pause = FadeOutMs -> Channel -> Effect (Either String Channel)
-type Resume = FadeInMs -> Channel -> Effect (Either String Channel)
-type ChangeVolume = Volume -> Channel -> Effect (Either String Channel)
+type Register = String -> ArrayBuffer -> Volume -> Maybe Loop -> Effect (Aff (Either AppError Channel))
+type Play = DelayMs -> OffsetMs -> FadeInMs -> FadeOutMs -> Channel -> Effect (Either AppError Channel)
+type Stop = FadeOutMs -> Channel -> Effect (Either AppError Channel)
+type Pause = FadeOutMs -> Channel -> Effect (Either AppError Channel)
+type Resume = FadeInMs -> Channel -> Effect (Either AppError Channel)
+type ChangeVolume = Volume -> Channel -> Effect (Either AppError Channel)

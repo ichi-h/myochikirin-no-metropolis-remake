@@ -14,6 +14,7 @@ import Data.ArrayBuffer.Types (ArrayBuffer)
 import Data.Either (Either(..))
 import Data.Function.Uncurried (Fn2, Fn6, Fn5, runFn2, runFn6, runFn5)
 import Data.Maybe (Maybe(..))
+import Domain.Exceptions.AppError (AppError(..), mapError)
 import Domain.Values.Audio.DelayMs (DelayMs(..))
 import Domain.Values.Audio.FadeInMs (FadeInMs(..))
 import Domain.Values.Audio.FadeOutMs (FadeOutMs(..))
@@ -21,7 +22,7 @@ import Domain.Values.Audio.OffsetMs (OffsetMs(..))
 import Domain.Values.Audio.Samples (Samples(..))
 import Domain.Values.Audio.Volume (Volume(..))
 import Effect (Effect)
-import Entities.Audio.Channel (ChangeVolume, PlayStatus(..), Channel(..), Loop(..), Pause, Play, Register, Stop, Resume)
+import Entities.Audio.Channel (ChangeVolume, Channel(..), Loop(..), Pause, Play, PlayStatus(..), Register, Resume, Stop)
 import Promise (Promise)
 import Promise.Aff (toAffE)
 
@@ -38,9 +39,9 @@ register name buffer (Volume volume) loop = pure do
     loopOps = case loop of
       Nothing -> { isLoop: false, start: 0, end: 0 }
       Just (Loop { start: (Samples start), end: (Samples end) }) -> { isLoop: true, start, end }
-  res <- try $ toAffE $ (runFn6 registerImpl) name buffer volume loopOps.isLoop loopOps.start loopOps.end
+  res <- map (mapError (AudioError <<< show)) $ try $ toAffE $ (runFn6 registerImpl) name buffer volume loopOps.isLoop loopOps.start loopOps.end
   case res of
-    Left err -> pure $ Left $ show err
+    Left err -> pure $ Left err
     Right _ -> pure $ Right $ Channel { name, playStatus: Stopped, volume: Volume volume, loop }
 
 play :: Play
@@ -49,7 +50,7 @@ play (DelayMs delayMs) (OffsetMs offsetMs) (FadeInMs fadeInMs) (FadeOutMs fadeOu
   if res == "" then
     pure $ Right $ Channel $ channel { playStatus = Playing }
   else
-    pure $ Left res
+    pure $ Left $ AudioError res
 
 stop :: Stop
 stop (FadeOutMs fadeOutMs) (Channel channel) = do
@@ -57,7 +58,7 @@ stop (FadeOutMs fadeOutMs) (Channel channel) = do
   if res == "" then
     pure $ Right $ Channel $ channel { playStatus = Stopped }
   else
-    pure $ Left res
+    pure $ Left $ AudioError res
 
 pause :: Pause
 pause (FadeOutMs fadeOutMs) (Channel channel) = do
@@ -65,7 +66,7 @@ pause (FadeOutMs fadeOutMs) (Channel channel) = do
   if res == "" then
     pure $ Right $ Channel $ channel { playStatus = Paused }
   else
-    pure $ Left res
+    pure $ Left $ AudioError res
 
 resume :: Resume
 resume (FadeInMs fadeInMs) (Channel channel) = do
@@ -73,7 +74,7 @@ resume (FadeInMs fadeInMs) (Channel channel) = do
   if res == "" then
     pure $ Right $ Channel $ channel { playStatus = Playing }
   else
-    pure $ Left res
+    pure $ Left $ AudioError res
 
 changeVolume :: ChangeVolume
 changeVolume (Volume volume) (Channel channel) = do
@@ -81,4 +82,4 @@ changeVolume (Volume volume) (Channel channel) = do
   if res == "" then
     pure $ Right $ Channel $ channel { volume = Volume volume }
   else
-    pure $ Left res
+    pure $ Left $ AudioError res
