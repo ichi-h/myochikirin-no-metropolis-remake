@@ -116,7 +116,7 @@ component =
   handleAction :: Action -> H.HalogenM State Action Slots output m Unit
   handleAction = case _ of
     Setup -> void $ runExceptTWithLog do
-      buffer <- ExceptT $ liftAff $ fetchAudio "/assets/bgm.ogg"
+      buffer <- ExceptT $ liftAff $ fetchAudio "/assets/sounds/bgm.ogg"
       asyncOperation <- liftEffect $ register "channel" buffer (Volume 1.0) (Just $ Loop { start: Samples 222966, end: maxSamples })
       channel <- ExceptT $ liftAff $ asyncOperation
       H.modify_ \(State s) -> State (s { channel = channel })
@@ -158,7 +158,7 @@ component =
 
     NextSentence -> void $ runExceptTWithLog do
       State state <- H.get
-      buffer <- ExceptT $ liftAff $ fetchAudio "/assets/bell.ogg"
+      buffer <- ExceptT $ liftAff $ fetchAudio "/assets/sounds/bell.ogg"
       asyncOperation <- liftEffect $ playOneShot (Volume 1.0) buffer
       _ <- ExceptT $ liftAff $ asyncOperation
       let nextIndex = if state.sentenceIndex + 1 >= Array.length sentences then 0 else state.sentenceIndex + 1
