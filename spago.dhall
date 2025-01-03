@@ -23,14 +23,18 @@ to generate this file without the comments in this block.
   , "either"
   , "functions"
   , "halogen"
+  , "halogen-store"
   , "halogen-subscriptions"
   , "integers"
   , "js-promise"
   , "js-promise-aff"
   , "maybe"
   , "prelude"
+  , "safe-coerce"
   , "strings"
+  , "tailrec"
   , "transformers"
+  , "tuples"
   ]
 , packages = ./packages.dhall
 , sources = [ "src/**/*.purs", "test/**/*.purs" ]
