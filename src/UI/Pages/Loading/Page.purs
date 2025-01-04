@@ -110,10 +110,13 @@ component =
                 H.modify_ \s -> s { isReady = true }
 
     ToTop -> do
-      Audio.playSE Audio.Bell
-      H.modify_ \s -> s { isNavigating = true }
-      H.liftAff $ delay $ Milliseconds $ 1000.0
-      updateStore $ Store.Navigate Store.Top
+      { isNavigating } <- H.get
+      if isNavigating then pure unit
+      else do
+        Audio.playSE Audio.Bell
+        H.modify_ \s -> s { isNavigating = true }
+        H.liftAff $ delay $ Milliseconds $ 1000.0
+        updateStore $ Store.Navigate Store.Top
 
   render :: State -> H.ComponentHTML Action () m
   render { progress, isReady, isError, isNavigating } =

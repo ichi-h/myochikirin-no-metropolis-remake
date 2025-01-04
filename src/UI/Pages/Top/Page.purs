@@ -13,11 +13,14 @@ import Halogen.Store.Monad (class MonadStore, updateStore)
 import UI.Capabilities.Audio as Audio
 import UI.Store as Store
 
-type State = { isAnimating :: Boolean }
+type State =
+  { isReady :: Boolean
+  , isNavigating :: Boolean
+  }
 
 data Action
   = Initialize
-  | ToNovel
+  | ToHome
 
 component
   :: forall query input output m
@@ -36,23 +39,31 @@ component =
     }
   where
   initialState :: forall i. i -> State
-  initialState _ = { isAnimating: false }
+  initialState _ =
+    { isReady: false
+    , isNavigating: false
+    }
 
   handleAction :: forall o. Action -> H.HalogenM State Action () o m Unit
   handleAction = case _ of
     Initialize -> do
       Audio.playBGM Audio.Theme
+      H.modify_ \s -> s { isReady = true }
+      H.liftAff $ delay $ Milliseconds $ 1000.0
 
-    ToNovel -> do
-      Audio.playSE Audio.Bell
-      H.modify_ \s -> s { isAnimating = true }
-      H.liftAff $ delay $ Milliseconds $ 3000.0
-      updateStore $ Store.Navigate Store.Novel
+    ToHome -> do
+      { isNavigating } <- H.get
+      if isNavigating then pure unit
+      else do
+        Audio.playSE Audio.Bell
+        H.modify_ \s -> s { isNavigating = true }
+        H.liftAff $ delay $ Milliseconds $ 3000.0
+        updateStore $ Store.Navigate Store.Home
 
   render :: State -> H.ComponentHTML Action () m
-  render { isAnimating } = HH.div
-    [ HP.class_ $ H.ClassName ("relative w-full h-svh bg-top bg-cover duration-2000 " <> (if isAnimating then "opacity-0" else "cursor-pointer"))
-    , HE.onClick \_ -> ToNovel
+  render { isReady, isNavigating } = HH.div
+    [ HP.class_ $ H.ClassName "relative w-full h-svh bg-top bg-cover"
+    , HE.onClick \_ -> ToHome
     ]
     [ HH.div
         [ HP.class_ $ H.ClassName "absolute top-0 w-full h-1/12 max-sm:h-16 max-lg:h-40 bg-primary"
@@ -74,4 +85,13 @@ component =
             ]
             [ HH.text "画面をクリック/タップしてください。" ]
         ]
+    , HH.div
+        [ HP.class_ $ H.ClassName
+            ( "absolute top-0 left-0 w-full h-svh flex items-center justify-center bg-primary " <>
+                if isReady && not isNavigating then "duration-1000 opacity-0"
+                else if isReady && isNavigating then "duration-2000 opacity-100"
+                else ""
+            )
+        ]
+        []
     ]

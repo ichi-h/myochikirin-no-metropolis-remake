@@ -231,7 +231,7 @@ component =
                   Finished -> NextSentence
             ]
             [ HH.div
-                [ HP.class_ $ HH.ClassName "w-full max-w-5xl text-4xl text-white break-all select-none "
+                [ HP.class_ $ HH.ClassName "w-full max-w-5xl text-4xl text-white break-all "
                 ]
                 ( mapWithIndex
                     ( \i c -> HH.span
