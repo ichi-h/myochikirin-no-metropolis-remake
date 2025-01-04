@@ -10,6 +10,8 @@ data BGM = Theme
 
 data SE = Bell | TurnPageLong | TurnPageShort
 
+derive instance eqBGM :: Eq SE
+
 toUrl :: BGM -> String
 toUrl Theme = "/assets/sounds/bgm.ogg"
 

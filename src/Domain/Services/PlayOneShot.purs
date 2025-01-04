@@ -4,11 +4,11 @@ module Domain.Services.PlayOneShot
 
 import Prelude
 
-import Data.ArrayBuffer.Types (ArrayBuffer)
 import Data.Either (Either)
 import Domain.Exceptions.AppError (AppError)
 import Domain.Values.Audio.Volume (Volume)
 import Effect (Effect)
 import Effect.Aff (Aff)
+import Utils.Buffer (AudioBuffer)
 
-type PlayOneShot = Volume -> ArrayBuffer -> Effect (Aff (Either AppError Unit))
+type PlayOneShot = Volume -> AudioBuffer -> Effect (Aff (Either AppError Unit))

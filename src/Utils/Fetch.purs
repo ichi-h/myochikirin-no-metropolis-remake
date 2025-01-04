@@ -1,4 +1,4 @@
-module Domain.Services.Fetch where
+module Utils.Fetch where
 
 import Prelude
 
@@ -9,8 +9,8 @@ import Data.Either (Either(..))
 import Domain.Exceptions.AppError (AppError(..))
 import Effect.Aff (Aff)
 
-fetchAudio :: String -> Aff (Either AppError ArrayBuffer)
-fetchAudio url = do
+fetchBinary :: String -> Aff (Either AppError ArrayBuffer)
+fetchBinary url = do
   response <- AX.get AXRF.arrayBuffer url
   case response of
     Left e -> pure $ Left $ FetchError e

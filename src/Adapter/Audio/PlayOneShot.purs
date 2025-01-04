@@ -5,7 +5,6 @@ module Adapter.Audio.PlayOneShot
 import Prelude
 
 import Control.Monad.Error.Class (try)
-import Data.ArrayBuffer.Types (ArrayBuffer)
 import Data.Either (Either(..))
 import Data.Function.Uncurried (Fn2, runFn2)
 import Domain.Exceptions.AppError (AppError(..), mapError)
@@ -14,8 +13,9 @@ import Domain.Values.Audio.Volume (Volume(..))
 import Effect (Effect)
 import Promise (Promise)
 import Promise.Aff (toAffE)
+import Utils.Buffer (AudioBuffer)
 
-foreign import playOneShotImpl :: Fn2 Number ArrayBuffer (Effect (Promise String))
+foreign import playOneShotImpl :: Fn2 Number AudioBuffer (Effect (Promise String))
 
 playOneShot :: PlayOneShot
 playOneShot (Volume volume) source = pure do

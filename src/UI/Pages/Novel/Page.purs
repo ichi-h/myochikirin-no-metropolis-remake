@@ -11,7 +11,6 @@ import Data.Int (toNumber)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.String (length)
 import Data.String.CodeUnits (fromCharArray, toCharArray)
-import Domain.Services.Fetch (fetchAudio)
 import Domain.Values.Audio.DelayMs (DelayMs(..))
 import Domain.Values.Audio.FadeInMs (FadeInMs(..))
 import Domain.Values.Audio.FadeOutMs (FadeOutMs(..))
@@ -27,6 +26,8 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Type.Proxy (Proxy(..))
+import UI.Capabilities.Audio as Audio
+import Utils.Fetch (fetchBinary)
 import Utils.Logger (runExceptTWithLog)
 
 data Action
@@ -92,7 +93,11 @@ type Slots =
 
 _router = Proxy :: Proxy "router"
 
-component :: forall query input output m. MonadAff m => H.Component query input output m
+component
+  :: forall query input output m
+   . MonadAff m
+  => Audio.Audio m
+  => H.Component query input output m
 component =
   H.mkComponent
     { initialState
@@ -116,7 +121,7 @@ component =
   handleAction :: Action -> H.HalogenM State Action Slots output m Unit
   handleAction = case _ of
     Setup -> void $ runExceptTWithLog do
-      buffer <- ExceptT $ liftAff $ fetchAudio "/assets/sounds/bgm.ogg"
+      buffer <- ExceptT $ liftAff $ fetchBinary "/assets/sounds/bgm.ogg"
       asyncOperation <- liftEffect $ register "channel" buffer (Volume 1.0) (Just $ Loop { start: Samples 222966, end: maxSamples })
       channel <- ExceptT $ liftAff $ asyncOperation
       H.modify_ \(State s) -> State (s { channel = channel })
@@ -157,10 +162,8 @@ component =
         pure unit
 
     NextSentence -> void $ runExceptTWithLog do
+      lift $ Audio.playSE Audio.Bell
       State state <- H.get
-      buffer <- ExceptT $ liftAff $ fetchAudio "/assets/sounds/bell.ogg"
-      asyncOperation <- liftEffect $ playOneShot (Volume 1.0) buffer
-      _ <- ExceptT $ liftAff $ asyncOperation
       let nextIndex = if state.sentenceIndex + 1 >= Array.length sentences then 0 else state.sentenceIndex + 1
       H.modify_ \(State s) -> State $ s
         { sentenceAnimation = Rendering
