@@ -3,7 +3,6 @@ module UI.Pages.Novel.Page where
 import Prelude
 
 import Adapter.Audio.Channel (changeVolume, pause, play, register, resume, stop)
-import Adapter.Audio.PlayOneShot (playOneShot)
 import Control.Monad.Except (ExceptT(..), lift)
 import Data.Array (mapWithIndex)
 import Data.Array as Array
