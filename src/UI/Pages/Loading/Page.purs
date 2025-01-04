@@ -175,7 +175,7 @@ component =
                     [ HP.class_ $ H.ClassName "text-secondary border border-secondary rounded-sm outline-none px-4 py-1 m-auto"
                     , HE.onClick \_ -> ToTop
                     ]
-                    [ HH.text "START" ]
+                    [ HH.text "はじめる" ]
                 ]
           ]
       ]

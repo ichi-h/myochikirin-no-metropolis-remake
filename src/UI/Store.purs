@@ -6,12 +6,22 @@ import Data.Array ((:))
 import Data.Maybe (Maybe(..))
 import Domain.Values.Audio.Volume (Volume(..))
 import Entities.Audio.Channel as Channel
+import Halogen.Store.Connect (Connected, connect)
+import Halogen.Store.Select (selectEq)
 import UI.Capabilities.Audio as Audio
+import UI.Novel (NovelTitle)
 import Utils.Buffer (AudioBuffer)
 
-data Route = Loading | Top | Home | Novel | Gallery | Config
+data Route = Loading | Top | Home | Novel NovelTitle | Gallery | Config | Credit
 
 derive instance eqRoute :: Eq Route
+
+type RouteReceive input = Connected Route input
+
+deriveRoute :: forall i. RouteReceive i -> Route
+deriveRoute { context } = context
+
+connectRoute = connect (selectEq _.route)
 
 type Store =
   { route :: Route
@@ -26,7 +36,7 @@ data Action
 
 initialStore :: Store
 initialStore =
-  { route: Loading
+  { route: Home
   , channel: Channel.Channel
       { name: "channel"
       , playStatus: Channel.Stopped

@@ -55,6 +55,9 @@ module.exports = {
         '192': '48rem',
         '224': '56rem',
       },
+      fontFamily: {
+        'pigmo': ['pigmo'],
+      },
       transitionDuration: {
         '2000': '2000ms',
       },
