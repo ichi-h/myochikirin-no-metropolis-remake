@@ -3,22 +3,23 @@
 @tailwind utilities;
 
 @font-face {
-  font-family: 'togoshi';
-  src: url('assets/fonts/togoshi-gothic/togoshi-gothic.min.woff2') format('woff2');
+  font-family: "togoshi";
+  src: url("assets/fonts/togoshi-gothic/togoshi-gothic.min.woff2")
+    format("woff2");
 }
 
 @font-face {
-  font-family: 'pigmo';
-  src: url('assets/fonts/pigmo01/pigmo01.min.woff2') format('woff2');
+  font-family: "pigmo";
+  src: url("assets/fonts/pigmo01/pigmo01.min.woff2") format("woff2");
 }
 
 * {
-  font-family: 'togoshi';
+  font-family: "togoshi";
   padding: 0;
   margin: 0;
   box-sizing: border-box;
 }
 
 body {
-  background-color: #050505
+  background-color: #0A0A05;
 }

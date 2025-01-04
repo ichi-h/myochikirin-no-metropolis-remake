@@ -11,7 +11,6 @@ import UI.Store as Store
 
 main :: Effect Unit
 main = HA.runHalogenAff do
-  let store = { route: Store.Top }
-  rootComponent <- runAppM store Router.component
+  rootComponent <- runAppM Store.initialStore Router.component
   body <- HA.awaitBody
   runUI rootComponent unit body

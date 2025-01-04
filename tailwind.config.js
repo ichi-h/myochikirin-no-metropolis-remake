@@ -28,6 +28,10 @@ module.exports = {
       '7': 'url(/assets/images/7.webp)',
     },
     extend: {
+      colors: {
+        'primary': '#0A0A05',
+        'secondary': '#FBFAF5',
+      },
       width: {
         /** 512px */
         '128': '32rem',
