@@ -57,6 +57,7 @@ component = H.mkComponent
   handleAction :: forall o. Action -> H.HalogenM State Action Slots o m Unit
   handleAction = case _ of
     Initialize -> do
+      H.liftAff $ delay $ Milliseconds 0.0 -- wait for rendering
       H.modify_ \s -> s { isReady = true }
 
     NavigateToNovel novelTitle -> do
@@ -101,7 +102,7 @@ component = H.mkComponent
                   ( "absolute top-0 left-0 flex items-center justify-center w-full h-svh bg-primary " <>
                       if isReady && not isNavigatingToNovel then "duration-1000 opacity-0 pointer-events-none"
                       else if isReady && isNavigatingToNovel then "duration-2000 opacity-100"
-                      else ""
+                      else "opacity-100"
                   )
               ]
               []
