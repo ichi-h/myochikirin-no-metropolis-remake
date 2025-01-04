@@ -9,7 +9,7 @@ import Entities.Audio.Channel as Channel
 import Halogen.Store.Connect (Connected, connect)
 import Halogen.Store.Select (selectEq)
 import UI.Capabilities.Audio as Audio
-import UI.Novel (NovelTitle)
+import UI.Novel (NovelTitle(..))
 import Utils.Buffer (AudioBuffer)
 
 data Route = Loading | Top | Home | Novel NovelTitle | Gallery | Config | Credit
@@ -36,7 +36,7 @@ data Action
 
 initialStore :: Store
 initialStore =
-  { route: Home
+  { route: Loading
   , channel: Channel.Channel
       { name: "channel"
       , playStatus: Channel.Stopped

@@ -74,7 +74,7 @@ component = Store.connectRoute $ H.mkComponent
       Store.Loading -> HH.slot_ _loadingPage unit LoadingPage.component unit
       Store.Home -> HH.slot_ _homePage unit HomePage.component unit
       Store.Top -> HH.slot_ _topPage unit TopPage.component unit
-      Store.Novel _ -> HH.slot_ _novelPage unit NovelPage.component unit
+      Store.Novel novelTitle -> HH.slot_ _novelPage unit NovelPage.component { novelTitle }
       Store.Config -> HH.slot_ _configPage unit ConfigPage.component unit
       Store.Gallery -> HH.slot_ _galleryPage unit GalleryPage.component unit
       Store.Credit -> HH.div_ [ HH.text "Credit" ]
