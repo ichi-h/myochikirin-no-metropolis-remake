@@ -66,7 +66,7 @@ instance audioAppM :: Audio.Audio AppM where
     in
       void $ runExceptTWithLog do
         buffer <- ExceptT $ getAudioBuffer
-        asyncOperation <- liftEffect $ playOneShot (Volume 1.0) buffer
+        asyncOperation <- liftEffect $ playOneShot (Volume 0.7) buffer
         ExceptT $ liftAff $ asyncOperation
 
   changeBGMVolume volume = do
