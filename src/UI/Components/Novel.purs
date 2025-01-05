@@ -6,30 +6,34 @@ import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Milliseconds(..), delay)
 import Effect.Aff.Class (class MonadAff)
-import Halogen (liftEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import UI.Novel as Novel
-import Utils.Logger (debugLog)
 
 type NovelState =
-  { novelContent :: Novel.NovelContent
-  , eventStore :: Novel.NovelContent
+  { novelContent :: Array Novel.NovelEvent
+  , eventStore ::
+      { messages :: Array Novel.MessageEvent
+      , images :: Array Novel.ImageEvent
+      , texts :: Array Novel.TextEvent
+      , baseLayer :: Maybe Novel.BaseLayerEvent
+      , messageBox :: Maybe Novel.MessageBoxEvent
+      }
   , index :: Int
   , isWaiting :: Boolean
   }
 
-data NovelAction = Initialize
-
 type NovelInput =
-  { novelContent :: Novel.NovelContent
+  { novelContent :: Array Novel.NovelEvent
   , index :: Int
   }
 
 data NovelOutput
   = Turned Int
   | Finished
+
+data NovelAction = NoOp
 
 data NovelQuery a = Turn Int a
 
@@ -40,22 +44,18 @@ component
    . MonadAff m
   => H.Component NovelQuery NovelInput NovelOutput m
 component = H.mkComponent
-  { initialState: \{ novelContent, index } -> { novelContent, eventStore: [], index, isWaiting: false }
+  { initialState: \{ novelContent, index } ->
+      { novelContent
+      , eventStore: { messages: [], images: [], texts: [], baseLayer: Nothing, messageBox: Nothing }
+      , index
+      , isWaiting: false
+      }
   , render
   , eval: H.mkEval H.defaultEval
       { handleQuery = handleQuery
-      , handleAction = handleAction
-      , initialize = Just Initialize
       }
   }
   where
-  handleAction :: NovelAction -> H.HalogenM NovelState NovelAction () NovelOutput m Unit
-  handleAction = case _ of
-    Initialize -> do
-      { index } <- H.get
-      _ <- handleQuery $ Turn index Finished
-      pure unit
-
   handleQuery
     :: forall a
      . NovelQuery a
@@ -68,31 +68,56 @@ component = H.mkComponent
         { novelContent } <- H.get
         case Array.index novelContent i of
           Just event -> do
-            liftEffect $ debugLog event
-            H.modify_ \s -> s { index = i, eventStore = s.eventStore <> [ event ] }
-            H.raise $ Turned i
+            { eventStore } <- H.get
             case event of
+              Novel.Message e -> do
+                let
+                  { waitClick, clear } = e
+                  newText = if clear then [ e ] else eventStore.messages <> [ e ]
+                H.modify_ \s -> s { index = i, eventStore = eventStore { messages = newText } }
+                H.raise $ Turned i
+                if waitClick then pure Nothing
+                else handleQuery $ Turn (i + 1) next
+              Novel.Image e -> do
+                H.modify_ \s -> s { index = i, eventStore = eventStore { images = eventStore.images <> [ e ] } }
+                H.raise $ Turned i
+                handleQuery $ Turn (i + 1) next
+              Novel.Text e -> do
+                H.modify_ \s -> s { index = i, eventStore = eventStore { texts = eventStore.texts <> [ e ] } }
+                H.raise $ Turned i
+                handleQuery $ Turn (i + 1) next
+              Novel.BaseLayer e -> do
+                H.modify_ \s -> s { index = i, eventStore = eventStore { baseLayer = Just e } }
+                H.raise $ Turned i
+                handleQuery $ Turn (i + 1) next
+              Novel.MessageBox e -> do
+                H.modify_ \s -> s { index = i, eventStore = eventStore { messageBox = Just e } }
+                H.raise $ Turned i
+                handleQuery $ Turn (i + 1) next
               Novel.Wait { time } -> do
-                H.modify_ \s -> s { isWaiting = true }
+                H.modify_ \s -> s { isWaiting = true, index = i }
+                H.raise $ Turned i
                 H.liftAff $ delay $ Milliseconds time
                 H.modify_ \s -> s { isWaiting = false }
                 handleQuery $ Turn (i + 1) next
-              Novel.Image _ -> do
-                handleQuery $ Turn (i + 1) next
-              _ -> do
-                pure $ Just next
           Nothing -> do
             H.raise Finished
             pure $ Just next
 
   render :: NovelState -> H.ComponentHTML NovelAction () m
-  render { eventStore } = HH.div
-    [ HP.class_ $ H.ClassName "w-full h-full text-secondary" ]
-    content
-    where
-    eventToHtml event = case event of
-      Novel.Text { text, style } -> HH.p [ HP.class_ $ H.ClassName style ] [ HH.text text ]
-      Novel.Image { src, style } -> HH.img [ HP.class_ $ H.ClassName style, HP.src src ]
-      _ -> HH.text ""
-
-    content = map eventToHtml eventStore
+  render { eventStore: { messages, images, texts, baseLayer, messageBox } } =
+    HH.div
+      [ HP.class_ $ H.ClassName $ case baseLayer of
+          Just { style } -> style
+          Nothing -> ""
+      ]
+      $ (map (\({ src, style }) -> HH.img [ HP.class_ $ H.ClassName style, HP.src src ]) images)
+          <> (map (\({ text, style }) -> HH.div [ HP.class_ $ H.ClassName style ] [ HH.text text ]) texts)
+          <>
+            [ HH.div
+                [ HP.class_ $ H.ClassName $ case messageBox of
+                    Just { style } -> style
+                    Nothing -> ""
+                ]
+                (map (\{ text, style } -> HH.p [ HP.class_ $ H.ClassName style ] [ HH.text text ]) messages)
+            ]

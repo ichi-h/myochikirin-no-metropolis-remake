@@ -32,8 +32,10 @@ data Action
   | NoOp
 
 type State =
-  { novelTitle :: Novel.NovelTitle
-  , novelContent :: Novel.NovelContent
+  { isReady :: Boolean
+  , isNavigating :: Boolean
+  , novelTitle :: Novel.NovelTitle
+  , novelContent :: Array Novel.NovelEvent
   , index :: Int
   }
 
@@ -61,14 +63,18 @@ component
   => H.Component query Input output m
 component =
   H.mkComponent
-    { initialState: \({ novelTitle }) -> { novelTitle, novelContent: Novel.getContent novelTitle, index: 0 }
+    { initialState: \({ novelTitle }) -> { isReady: false, isNavigating: false, novelTitle, novelContent: Novel.getContent novelTitle, index: 0 }
     , render
     , eval: H.mkEval $ H.defaultEval { handleAction = handleAction, initialize = Just Initialize }
     }
   where
   handleAction :: Action -> H.HalogenM State Action Slots output m Unit
   handleAction = case _ of
-    Initialize -> pure unit
+    Initialize -> do
+      H.liftAff $ delay $ Milliseconds 0.0 -- wait for rendering
+      H.modify_ \s -> s { isReady = true }
+      { index } <- H.get
+      handleAction $ Turn index
 
     Turn i -> do
       H.tell _novel 0 (NovelComponent.Turn i)
@@ -79,15 +85,25 @@ component =
           H.modify_ \s -> s { index = i }
 
         NovelComponent.Finished -> do
-          liftEffect $ debugLog "Finished"
+          H.modify_ \s -> s { isNavigating = true }
+          H.liftAff $ delay $ Milliseconds 2000.0
           updateStore $ Store.Navigate Store.Home
 
     NoOp -> pure unit
 
-  render { novelTitle, novelContent, index } =
+  render { isReady, isNavigating, novelTitle, novelContent, index } =
     HH.div
-      [ HP.class_ $ HH.ClassName "w-full h-svh flex items-center justify-center"
+      [ HP.class_ $ HH.ClassName "relative w-full h-svh flex items-center justify-center"
       , HE.onClick \_ -> Turn $ index + 1
       ]
       [ HH.slot _novel 0 NovelComponent.component { novelContent, index: 0 } HandleNovel
+      , HH.div
+          [ HP.class_ $ H.ClassName
+              ( "absolute top-0 left-0 flex items-center justify-center w-full h-svh bg-primary " <>
+                  if isReady && not isNavigating then "duration-1000 opacity-0 pointer-events-none"
+                  else if isReady && isNavigating then "duration-2000 opacity-100"
+                  else "opacity-100"
+              )
+          ]
+          []
       ]
