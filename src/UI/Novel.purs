@@ -65,7 +65,7 @@ excursionContent :: Array NovelEvent
 excursionContent =
   [ BaseLayer ble
   , MessageBox $ mbe { style = mbe.style <> "max-2xl:h-36 h-56" }
-  , Image $ ie { src = "/assets/images/1.webp" }
+  , Image $ ie { src = "/images/1.webp" }
   , Text $ te { text = toString Excursion }
   , Wait we
   , Message $ me { text = "天の川の中をじっと凝視すると" }
@@ -78,7 +78,7 @@ theSongStealerContent :: Array NovelEvent
 theSongStealerContent =
   [ BaseLayer ble
   , MessageBox $ mbe { style = mbe.style <> "max-xs:h-36 max-sm:h-40 max-2xl:h-36 h-56" }
-  , Image $ ie { src = "/assets/images/2.webp" }
+  , Image $ ie { src = "/images/2.webp" }
   , Text $ te { text = toString TheSongStealer }
   , Wait we
   , Message $ me { text = "街角で　唄を見失っていると" }
@@ -91,7 +91,7 @@ theEclipseContent :: Array NovelEvent
 theEclipseContent =
   [ BaseLayer ble
   , MessageBox $ mbe { style = mbe.style <> "max-xs:h-48 max-sm:h-44 max-2xl:h-36 h-56" }
-  , Image $ ie { src = "/assets/images/3.webp" }
+  , Image $ ie { src = "/images/3.webp" }
   , Text $ te { text = toString TheEclipse }
   , Wait we
   , Message $ me { text = "赤い月とナンセンスな太陽が　ドン！　と衝突した" }
@@ -104,7 +104,7 @@ questionWhereAmINowContent :: Array NovelEvent
 questionWhereAmINowContent =
   [ BaseLayer ble
   , MessageBox $ mbe { style = mbe.style <> "max-xs:h-36 max-sm:h-40 max-2xl:h-28 h-40" }
-  , Image $ ie { src = "/assets/images/4.webp" }
+  , Image $ ie { src = "/images/4.webp" }
   , Text $ te { text = toString QuestionWhereAmINow }
   , Wait we
   , Message $ me { text = "A氏は夜更けのほうへ　流星をうたいながら歩いている" }
@@ -116,7 +116,7 @@ starEcologyContent :: Array NovelEvent
 starEcologyContent =
   [ BaseLayer ble
   , MessageBox $ mbe { style = mbe.style <> "max-xs:h-40 max-sm:h-44 max-2xl:h-44 h-64" }
-  , Image $ ie { src = "/assets/images/5.webp" }
+  , Image $ ie { src = "/images/5.webp" }
   , Text $ te { text = toString StarEcology }
   , Wait we
   , Message $ me { text = "青い月の説によると" }
@@ -130,7 +130,7 @@ interceptionContent :: Array NovelEvent
 interceptionContent =
   [ BaseLayer ble
   , MessageBox $ mbe { style = mbe.style <> "max-xs:h-28 max-sm:h-32 max-2xl:h-36 h-56" }
-  , Image $ ie { src = "/assets/images/6.webp" }
+  , Image $ ie { src = "/images/6.webp" }
   , Text $ te { text = toString Interception }
   , Wait we
   , Message $ me { text = "ある晩" }
@@ -143,7 +143,7 @@ theSavageMoonCatContent :: Array NovelEvent
 theSavageMoonCatContent =
   [ BaseLayer ble
   , MessageBox $ mbe { style = mbe.style <> "max-xs:h-36 max-sm:h-40 max-2xl:h-36 h-56" }
-  , Image $ ie { src = "/assets/images/7.webp" }
+  , Image $ ie { src = "/images/7.webp" }
   , Text $ te { text = toString TheSavageMoonCat }
   , Wait we
   , Message $ me { text = "登ってしまったお月様が　街路の中へ投げ込まれた" }

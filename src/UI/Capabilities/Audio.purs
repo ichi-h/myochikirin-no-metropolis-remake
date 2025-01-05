@@ -13,12 +13,12 @@ data SE = Bell | TurnPageLong | TurnPageShort
 derive instance eqBGM :: Eq SE
 
 toUrl :: BGM -> String
-toUrl Theme = "/assets/sounds/bgm.ogg"
+toUrl Theme = "/sounds/bgm.ogg"
 
 toUrlSE :: SE -> String
-toUrlSE Bell = "/assets/sounds/bell.ogg"
-toUrlSE TurnPageLong = "/assets/sounds/turnPage1.ogg"
-toUrlSE TurnPageShort = "/assets/sounds/turnPage2.ogg"
+toUrlSE Bell = "/sounds/bell.ogg"
+toUrlSE TurnPageLong = "/sounds/turnPage1.ogg"
+toUrlSE TurnPageShort = "/sounds/turnPage2.ogg"
 
 class Monad m <= Audio m where
   playBGM :: BGM -> m Unit

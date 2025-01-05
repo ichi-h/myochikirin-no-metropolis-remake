@@ -78,7 +78,7 @@ component =
         ]
         [ HH.img
             [ HP.class_ $ H.ClassName "bg-title bg-no-repeat bg-contain w-256 max-lg:w-11/12 max-2xl:w-192 h-auto bg-center"
-            , HP.src "assets/images/title.webp"
+            , HP.src "images/title.webp"
             ]
         , HH.div
             [ HP.class_ $ H.ClassName "text-secondary w-full text-center text-4xl max-xs:text-sm max-sm:text-lg max-md:text-2xl max-2xl:text-3xl animate-blinking"

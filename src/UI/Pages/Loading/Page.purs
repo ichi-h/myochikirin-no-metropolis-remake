@@ -65,18 +65,18 @@ component =
       -- assets pre-loading
       let
         urls =
-          [ "/assets/sounds/bgm.ogg"
-          , "/assets/images/1.webp"
-          , "/assets/images/2.webp"
-          , "/assets/images/3.webp"
-          , "/assets/images/4.webp"
-          , "/assets/images/5.webp"
-          , "/assets/images/6.webp"
-          , "/assets/images/7.webp"
-          , "/assets/images/home.webp"
-          , "/assets/images/secret.webp"
-          , "/assets/images/title.webp"
-          , "/assets/images/top.webp"
+          [ "/sounds/bgm.ogg"
+          , "/images/1.webp"
+          , "/images/2.webp"
+          , "/images/3.webp"
+          , "/images/4.webp"
+          , "/images/5.webp"
+          , "/images/6.webp"
+          , "/images/7.webp"
+          , "/images/home.webp"
+          , "/images/secret.webp"
+          , "/images/title.webp"
+          , "/images/top.webp"
           , "/assets/fonts/pigmo01/pigmo01.min.woff2"
           , "/assets/fonts/togoshi-gothic/togoshi-gothic.min.woff2"
           ]
@@ -147,7 +147,7 @@ component =
           ]
           [ HH.img
               [ HP.class_ $ H.ClassName "w-128 max-sm:w-60 max-lg:w-96 h-auto bg-center"
-              , HP.src "assets/images/title.webp"
+              , HP.src "images/title.webp"
               ]
           , if isError then
               HH.div
