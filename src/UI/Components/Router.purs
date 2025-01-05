@@ -17,9 +17,7 @@ import UI.Store as Store
 
 type State = { route :: Store.Route, isNavigating :: Boolean }
 
-data Action
-  = Receive (Store.RouteReceive Unit)
-  -- | HandleHomeLayout HomeLayout.HomeLayoutOutput
+data Action = Receive (Store.RouteReceive Unit)
 
 type Slots =
   ( loadingPage :: forall query. H.Slot query Void Unit

@@ -2,6 +2,7 @@ module UI.Components.Layouts.Home where
 
 import Prelude
 
+import Data.Maybe (Maybe(..))
 import Effect.Aff (Milliseconds(..), delay)
 import Effect.Aff.Class (class MonadAff)
 import Halogen as H
@@ -19,13 +20,15 @@ import UI.Store as Store
 
 type HomeLayoutState =
   { route :: Store.Route
+  , isReady :: Boolean
   , isNavigating :: Boolean
   }
 
 type HomeLayoutSlot = forall query. H.Slot query Unit Unit
 
 data HomeLayoutAction
-  = Receive (Store.RouteReceive Unit)
+  = Initialize
+  | Receive (Store.RouteReceive Unit)
   | Navigate Store.Route
 
 type Slots =
@@ -47,10 +50,14 @@ component
 component = connectRoute $ H.mkComponent
   { initialState: \({ context }) ->
       { route: context
+      , isReady: false
       , isNavigating: false
       }
   , render
-  , eval: H.mkEval H.defaultEval { handleAction = handleAction }
+  , eval: H.mkEval H.defaultEval
+      { handleAction = handleAction
+      , initialize = Just Initialize
+      }
   }
   where
   delayForNavigation :: Number
@@ -58,6 +65,10 @@ component = connectRoute $ H.mkComponent
 
   handleAction :: HomeLayoutAction -> H.HalogenM HomeLayoutState HomeLayoutAction Slots output m Unit
   handleAction = case _ of
+    Initialize -> do
+      H.liftAff $ delay $ Milliseconds 100.0 -- wait for rendering
+      H.modify_ \s -> s { isReady = true }
+
     Receive input -> do
       let route = Store.deriveRoute input
       H.modify_ \s -> s { route = route }
@@ -73,46 +84,52 @@ component = connectRoute $ H.mkComponent
         H.modify_ \s -> s { isNavigating = false, route = route }
 
   render :: HomeLayoutState -> H.ComponentHTML HomeLayoutAction Slots m
-  render { route, isNavigating } =
+  render { route, isReady, isNavigating } =
     HH.div
-    [ HP.class_ $ H.ClassName "bg-home w-full h-svh flex flex-col bg-cover bg-center"
-    ]
-    [ HH.div
-        [ HP.class_ $ H.ClassName $ "flex-1 duration-300" <> if isNavigating then " opacity-0" else ""
-        ]
-        [
-          case route of
-            Store.Home -> HH.slot_ _homePage unit HomePage.component unit
-            Store.Config -> HH.slot_ _configPage unit ConfigPage.component unit
-            Store.Gallery -> HH.slot_ _galleryPage unit GalleryPage.component unit
-            _ -> HH.text ""
-        ]
-    , HH.div
-        [ HP.class_ $ H.ClassName "w-full max-2xl:mb-2 mb-4 max-lg:pr-0 max-2xl:pr-4 pr-8" ]
-        [
-          HH.div
-            [ HP.class_ $ H.ClassName "w-full flex max-lg:justify-center justify-end max-md:gap-3 max-2xl:gap-6 gap-8 mb-2 text-secondary max-xs:text-sm max-md:text-base max-2xl:text-xl text-3xl"
-            ]
-            [ HH.button
-                [ HP.class_ $ H.ClassName if route == Store.Home then "underline" else ""
-                , HE.onClick \_ -> Navigate Store.Home
-                ]
-                [ HH.text "ホーム" ]
-            , HH.button
-                [ HP.class_ $ H.ClassName if route == Store.Gallery then "underline" else ""
-                , HE.onClick \_ -> Navigate Store.Gallery
-                ]
-                [ HH.text "ギャラリー" ]
-            , HH.button
-                [ HP.class_ $ H.ClassName if route == Store.Config then "underline" else ""
-                , HE.onClick \_ -> Navigate Store.Config
-                ]
-                [ HH.text "コンフィグ" ]
-            , HH.button
-                [ HP.class_ $ H.ClassName if route == Store.Credit then "underline" else ""
-                , HE.onClick \_ -> Navigate Store.Credit
-                ]
-                [ HH.text "クレジット" ]
-            ]
-        ]
-    ]
+      [ HP.class_ $ H.ClassName "relative bg-home w-full h-svh flex flex-col bg-cover bg-center"
+      ]
+      [ HH.div
+          [ HP.class_ $ H.ClassName $ "flex-1 duration-300" <> if isNavigating then " opacity-0" else ""
+          ]
+          [ case route of
+              Store.Home -> HH.slot_ _homePage unit HomePage.component unit
+              Store.Config -> HH.slot_ _configPage unit ConfigPage.component unit
+              Store.Gallery -> HH.slot_ _galleryPage unit GalleryPage.component unit
+              _ -> HH.text ""
+          ]
+      , HH.div
+          [ HP.class_ $ H.ClassName "w-full max-2xl:mb-2 mb-4 max-lg:pr-0 max-2xl:pr-4 pr-8" ]
+          [ HH.div
+              [ HP.class_ $ H.ClassName "w-full flex max-lg:justify-center justify-end max-md:gap-3 max-2xl:gap-6 gap-8 mb-2 text-secondary max-xs:text-sm max-md:text-base max-2xl:text-xl text-3xl"
+              ]
+              [ HH.button
+                  [ HP.class_ $ H.ClassName if route == Store.Home then "underline" else ""
+                  , HE.onClick \_ -> Navigate Store.Home
+                  ]
+                  [ HH.text "ホーム" ]
+              , HH.button
+                  [ HP.class_ $ H.ClassName if route == Store.Gallery then "underline" else ""
+                  , HE.onClick \_ -> Navigate Store.Gallery
+                  ]
+                  [ HH.text "ギャラリー" ]
+              , HH.button
+                  [ HP.class_ $ H.ClassName if route == Store.Config then "underline" else ""
+                  , HE.onClick \_ -> Navigate Store.Config
+                  ]
+                  [ HH.text "コンフィグ" ]
+              , HH.button
+                  [ HP.class_ $ H.ClassName if route == Store.Credit then "underline" else ""
+                  , HE.onClick \_ -> Navigate Store.Credit
+                  ]
+                  [ HH.text "クレジット" ]
+              ]
+          ]
+      , HH.div
+          [ HP.class_ $ H.ClassName
+              ( "absolute top-0 left-0 flex items-center justify-center w-full h-svh bg-primary duration-1000 " <>
+                  if not isReady then "opacity-100"
+                  else "opacity-0 pointer-events-none"
+              )
+          ]
+          []
+      ]

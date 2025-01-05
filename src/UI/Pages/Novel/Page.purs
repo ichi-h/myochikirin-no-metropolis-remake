@@ -55,11 +55,11 @@ component
 component =
   H.mkComponent
     { initialState: \({ novelTitle }) ->
-      { isReady: false
-      , isNavigating: false
-      , novelTitle
-      , novelContent: Novel.getContent novelTitle
-      }
+        { isReady: false
+        , isNavigating: false
+        , novelTitle
+        , novelContent: Novel.getContent novelTitle
+        }
     , render
     , eval: H.mkEval $ H.defaultEval { handleAction = handleAction, initialize = Just Initialize }
     }

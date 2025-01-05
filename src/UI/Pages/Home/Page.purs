@@ -17,8 +17,7 @@ type State =
   { isNavigatingToNovel :: Boolean
   }
 
-data Action
-  = NavigateToNovel Novel.NovelTitle
+data Action = NavigateToNovel Novel.NovelTitle
 
 type HomeSlot = forall query. H.Slot query Unit Unit
 

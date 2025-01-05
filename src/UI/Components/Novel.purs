@@ -40,8 +40,7 @@ type NovelInput =
   , index :: Int
   }
 
-data NovelOutput
-  = Finished
+data NovelOutput = Finished
 
 data NovelAction
   = StartAnimation
