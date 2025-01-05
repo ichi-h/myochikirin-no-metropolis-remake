@@ -15,7 +15,6 @@ to generate this file without the comments in this block.
   [ "aff"
   , "affjax"
   , "affjax-web"
-  , "arraybuffer"
   , "arraybuffer-types"
   , "arrays"
   , "console"
@@ -25,7 +24,6 @@ to generate this file without the comments in this block.
   , "functions"
   , "halogen"
   , "halogen-store"
-  , "halogen-subscriptions"
   , "integers"
   , "js-promise"
   , "js-promise-aff"
@@ -35,7 +33,6 @@ to generate this file without the comments in this block.
   , "prelude"
   , "safe-coerce"
   , "strings"
-  , "tailrec"
   , "transformers"
   , "tuples"
   ]
