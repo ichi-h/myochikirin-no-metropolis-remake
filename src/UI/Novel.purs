@@ -59,7 +59,7 @@ ble :: BaseLayerEvent
 ble = { style: "w-full h-full flex flex-col justify-center items-center max-sm:gap-6 gap-8 max-sm:mx-4 max-lg:mx-16" }
 
 mbe :: MessageBoxEvent
-mbe = { style: "text-secondary w-full max-xs:text-base max-sm:text-lg max-2xl:text-2xl text-4xl max-md:text-left text-center " }
+mbe = { style: "text-secondary w-full max-xs:text-base max-sm:text-lg max-2xl:text-2xl text-4xl max-md:text-left text-center break-all " }
 
 excursionContent :: Array NovelEvent
 excursionContent =

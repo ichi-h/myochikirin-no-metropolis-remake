@@ -2,32 +2,24 @@ module UI.Pages.Novel.Page where
 
 import Prelude
 
-import Control.Monad.Except (ExceptT(..), lift)
-import Data.Array (mapWithIndex)
-import Data.Array as Array
 import Data.Int (toNumber)
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Maybe (Maybe(..))
 import Data.String (length)
-import Data.String.CodeUnits (fromCharArray, toCharArray)
 import Effect.Aff (Milliseconds(..), delay)
-import Effect.Aff.Class (class MonadAff, liftAff)
-import Halogen (liftEffect)
+import Effect.Aff.Class (class MonadAff)
 import Halogen as H
-import Halogen.HTML (output)
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Store.Monad (class MonadStore, updateStore)
 import Type.Proxy (Proxy(..))
-import UI.Components.Novel (NovelOutput(..))
 import UI.Components.Novel as NovelComponent
 import UI.Novel as Novel
 import UI.Store as Store
-import Utils.Logger (debugLog, runExceptTWithLog)
 
 data Action
   = Initialize
-  | Turn Int
+  | Turn
   | HandleNovel NovelComponent.NovelOutput
   | NoOp
 
@@ -36,7 +28,6 @@ type State =
   , isNavigating :: Boolean
   , novelTitle :: Novel.NovelTitle
   , novelContent :: Array Novel.NovelEvent
-  , index :: Int
   }
 
 type Input =
@@ -63,7 +54,12 @@ component
   => H.Component query Input output m
 component =
   H.mkComponent
-    { initialState: \({ novelTitle }) -> { isReady: false, isNavigating: false, novelTitle, novelContent: Novel.getContent novelTitle, index: 0 }
+    { initialState: \({ novelTitle }) ->
+      { isReady: false
+      , isNavigating: false
+      , novelTitle
+      , novelContent: Novel.getContent novelTitle
+      }
     , render
     , eval: H.mkEval $ H.defaultEval { handleAction = handleAction, initialize = Just Initialize }
     }
@@ -73,17 +69,13 @@ component =
     Initialize -> do
       H.liftAff $ delay $ Milliseconds 0.0 -- wait for rendering
       H.modify_ \s -> s { isReady = true }
-      { index } <- H.get
-      handleAction $ Turn index
+      handleAction $ Turn
 
-    Turn i -> do
-      H.tell _novel 0 (NovelComponent.Turn i)
+    Turn -> do
+      H.tell _novel 0 (NovelComponent.Turn)
 
     HandleNovel output -> do
       case output of
-        NovelComponent.Turned i -> do
-          H.modify_ \s -> s { index = i }
-
         NovelComponent.Finished -> do
           H.modify_ \s -> s { isNavigating = true }
           H.liftAff $ delay $ Milliseconds 2000.0
@@ -91,10 +83,10 @@ component =
 
     NoOp -> pure unit
 
-  render { isReady, isNavigating, novelTitle, novelContent, index } =
+  render { isReady, isNavigating, novelContent } =
     HH.div
       [ HP.class_ $ HH.ClassName "relative w-full h-svh flex items-center justify-center"
-      , HE.onClick \_ -> Turn $ index + 1
+      , HE.onClick \_ -> Turn
       ]
       [ HH.slot _novel 0 NovelComponent.component { novelContent, index: 0 } HandleNovel
       , HH.div
