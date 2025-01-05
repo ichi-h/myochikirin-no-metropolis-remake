@@ -74,7 +74,7 @@ component =
         ]
         []
     , HH.div
-        [ HP.class_ $ H.ClassName "flex flex-col items-center justify-center gap-4 max-sm:gap-3 w-full h-full"
+        [ HP.class_ $ H.ClassName "flex flex-col items-center justify-center max-sm:gap-4 gap-6 w-full h-full"
         ]
         [ HH.img
             [ HP.class_ $ H.ClassName "bg-title bg-no-repeat bg-contain w-256 max-lg:w-11/12 max-2xl:w-192 h-auto bg-center"
