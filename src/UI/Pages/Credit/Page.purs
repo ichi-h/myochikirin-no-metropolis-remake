@@ -1,4 +1,4 @@
-module UI.Pages.Gallery.Page where
+module UI.Pages.Credit.Page where
 
 import Prelude
 
@@ -26,7 +26,7 @@ component =
     [ HH.h1
         [ HP.class_ $ H.ClassName "font-pigmo max-xs:text-3xl max-md:text-4xl max-2xl:text-5xl text-7xl"
         ]
-        [ HH.text "ギャラリー" ]
+        [ HH.text "クレジット" ]
     , HH.div
         [ HP.class_ $ H.ClassName "max-xs:text-base max-md:text-xl max-2xl:text-2xl text-4xl"
         ]

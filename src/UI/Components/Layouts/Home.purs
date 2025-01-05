@@ -12,6 +12,7 @@ import Halogen.HTML.Properties as HP
 import Halogen.Store.Monad (class MonadStore, updateStore)
 import Type.Proxy (Proxy(..))
 import UI.Capabilities.Audio as Audio
+import UI.Pages.Credit.Page as CreditPage
 import UI.Pages.Config.Page as ConfigPage
 import UI.Pages.Gallery.Page as GalleryPage
 import UI.Pages.Home.Page as HomePage
@@ -35,11 +36,13 @@ type Slots =
   ( homePage :: HomePage.HomeSlot
   , configPage :: forall query. H.Slot query Void Unit
   , galleryPage :: forall query. H.Slot query Void Unit
+  , creditPage :: forall query. H.Slot query Void Unit
   )
 
 _homePage = Proxy :: Proxy "homePage"
-_configPage = Proxy :: Proxy "configPage"
 _galleryPage = Proxy :: Proxy "galleryPage"
+_configPage = Proxy :: Proxy "configPage"
+_creditPage = Proxy :: Proxy "creditPage"
 
 component
   :: forall query input output m
@@ -95,6 +98,7 @@ component = connectRoute $ H.mkComponent
               Store.Home -> HH.slot_ _homePage unit HomePage.component unit
               Store.Config -> HH.slot_ _configPage unit ConfigPage.component unit
               Store.Gallery -> HH.slot_ _galleryPage unit GalleryPage.component unit
+              Store.Credit -> HH.slot_ _creditPage unit CreditPage.component unit
               _ -> HH.text ""
           ]
       , HH.div
@@ -116,7 +120,7 @@ component = connectRoute $ H.mkComponent
                   [ HP.class_ $ H.ClassName if route == Store.Config then "underline" else ""
                   , HE.onClick \_ -> Navigate Store.Config
                   ]
-                  [ HH.text "コンフィグ" ]
+                  [ HH.text "設定" ]
               , HH.button
                   [ HP.class_ $ H.ClassName if route == Store.Credit then "underline" else ""
                   , HE.onClick \_ -> Navigate Store.Credit
