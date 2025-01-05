@@ -77,7 +77,7 @@ footerComponent = connectRoute $ H.mkComponent
 
   render :: FooterState -> H.ComponentHTML FooterAction () m
   render { route } = HH.div
-    [ HP.class_ $ H.ClassName "w-full flex max-lg:justify-center justify-end max-xs:gap-3 max-2xl:gap-6 gap-8 mb-2 text-secondary max-xs:text-sm max-md:text-base max-2xl:text-xl text-3xl" ]
+    [ HP.class_ $ H.ClassName "w-full flex max-lg:justify-center justify-end max-md:gap-3 max-2xl:gap-6 gap-8 mb-2 text-secondary max-xs:text-sm max-md:text-base max-2xl:text-xl text-3xl" ]
     [ HH.button
         [ HP.class_ $ H.ClassName if route == Store.Home then "underline" else ""
         , HE.onClick \_ -> Navigate Store.Home

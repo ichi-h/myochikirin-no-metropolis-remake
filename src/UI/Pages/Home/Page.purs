@@ -57,7 +57,7 @@ component = H.mkComponent
   handleAction :: forall o. Action -> H.HalogenM State Action Slots o m Unit
   handleAction = case _ of
     Initialize -> do
-      H.liftAff $ delay $ Milliseconds 0.0 -- wait for rendering
+      H.liftAff $ delay $ Milliseconds 100.0 -- wait for rendering
       H.modify_ \s -> s { isReady = true }
 
     NavigateToNovel novelTitle -> do
