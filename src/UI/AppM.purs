@@ -11,7 +11,7 @@ import Domain.Values.Audio.DelayMs (DelayMs(..))
 import Domain.Values.Audio.FadeInMs (FadeInMs(..))
 import Domain.Values.Audio.FadeOutMs (FadeOutMs(..))
 import Domain.Values.Audio.OffsetMs (OffsetMs(..))
-import Domain.Values.Audio.Samples (Samples(..), maxSamples)
+import Domain.Values.Audio.Samples (Samples(..))
 import Domain.Values.Audio.Volume (Volume(..))
 import Effect.Aff (Aff)
 import Effect.Aff.Class (class MonadAff, liftAff)
@@ -46,7 +46,7 @@ instance audioAppM :: Audio.Audio AppM where
   playBGM bgm = void $ runExceptTWithLog do
     let url = toUrl bgm
     buffer <- ExceptT $ liftAff $ fetchBinary url
-    asyncOperation <- liftEffect $ register "channel" buffer (Volume 1.0) (Just $ Loop { start: Samples 222966, end: maxSamples })
+    asyncOperation <- liftEffect $ register "channel" buffer (Volume 1.0) (Just $ Loop { start: Samples 3027, end: Samples 1923029 })
     c1 <- ExceptT $ liftAff $ asyncOperation
     c2 <- ExceptT $ liftEffect $ play (DelayMs 0) (OffsetMs 0) (FadeInMs 0) (FadeOutMs 0) c1
     updateStore $ Store.UpdateChannel c2
