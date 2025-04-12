@@ -6,6 +6,7 @@
  * @returns {Promise<AudioBuffer>}
  */
 export const array2AudioBufferImpl = (arrayBuffer) => {
-  const audioContext = new AudioContext();
-  return audioContext.decodeAudioData(arrayBuffer);
+
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  return ctx.decodeAudioData(arrayBuffer).finally(() => ctx.close());
 };
