@@ -16,7 +16,6 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Store.Monad (class MonadStore, updateStore)
-import UI.Capabilities.Audio (toUrlSE)
 import UI.Capabilities.Audio as Audio
 import UI.Store as Store
 import Utils.Buffer (array2AudioBuffer)
@@ -65,7 +64,7 @@ component =
       -- assets pre-loading
       let
         urls =
-          [ "/sounds/bgm.ogg"
+          [ Audio.toUrl Audio.Theme
           , "/images/1.webp"
           , "/images/2.webp"
           , "/images/3.webp"
@@ -93,7 +92,7 @@ component =
               , Audio.TurnPageShort
               ]
           )
-        seUrls = map toUrlSE ses
+        seUrls = map Audio.toUrlSE ses
 
       responses <- liftAff $ parTraverse fetchBinary $ toArray seUrls
       case fromArray responses of
